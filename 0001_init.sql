@@ -1,0 +1,8 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, ig_user_id TEXT NOT NULL UNIQUE, username TEXT NOT NULL, access_token_enc TEXT NOT NULL, token_expires_at INTEGER, enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS batches (id TEXT PRIMARY KEY, name TEXT NOT NULL, common_caption TEXT NOT NULL DEFAULT '', cover_key TEXT, status TEXT NOT NULL DEFAULT 'draft', scheduled_at INTEGER, selected_accounts TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS videos (id TEXT PRIMARY KEY, batch_id TEXT NOT NULL REFERENCES batches(id) ON DELETE CASCADE, filename TEXT NOT NULL, object_key TEXT NOT NULL, bytes INTEGER NOT NULL, mime_type TEXT NOT NULL, caption TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'ready', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(batch_id, object_key));
+CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, batch_id TEXT NOT NULL REFERENCES batches(id) ON DELETE CASCADE, video_id TEXT NOT NULL REFERENCES videos(id) ON DELETE CASCADE, account_id TEXT NOT NULL REFERENCES accounts(id), status TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0, container_id TEXT, media_id TEXT, error TEXT, next_attempt_at INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(video_id, account_id));
+CREATE INDEX IF NOT EXISTS idx_jobs_status_next ON jobs(status,next_attempt_at);
+CREATE INDEX IF NOT EXISTS idx_videos_batch ON videos(batch_id);
